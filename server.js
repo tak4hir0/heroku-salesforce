@@ -46,7 +46,7 @@ app.post('/chatter', function (req, res) {
 
   salesforce_client.getGroups(function (err, groups) {
     if (err) return res.send(500);
-    salesforce_client.postToCompany({
+    salesforce_client.postToChatter({
       group:   groups[0],
       message: req.body.message
     }, function (err) {
