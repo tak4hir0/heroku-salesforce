@@ -1,7 +1,7 @@
 var http     = require('http');
 var express  = require('express');
 var passport = require('passport');
-var request  = require('request');
+var Salesforce = require('./lib/salesforce');
 
 require('./lib/setup_passport');
 
@@ -12,6 +12,7 @@ app.configure(function () {
   app.set('views', __dirname + '/views');
 
   app.use(express.cookieParser());
+  app.use(express.bodyParser());
   app.use(express.session({ secret: 'keyboard cat' }));
 
   app.use(passport.initialize());
@@ -34,20 +35,24 @@ app.get('/', function (req, res) {
   });
 });
 
-//Get users from salesforce
-app.get('/users', function (req, res) {
+app.post('/chatter', function (req, res) {
   if (!req.user || req.user.identities[0].provider !== 'salesforce') {
-    return res.send(401);
+    return res.redirect('/');
   }
-  var salesforce_access_token = req.user.identities[0].access_token;
-  var url = req.user._json.urls.users.replace(/\{version\}/ig, '29.0');
-  request.get(url, {
-    headers: {
-      Authorization: 'Bearer ' + salesforce_access_token
-    }
-  }, function (err, resp, body) {
+
+  var access_token = req.user.identities[0].access_token;
+  var urls = req.user._json.urls;
+  var salesforce_client = new Salesforce(access_token, urls);
+
+  salesforce_client.getGroups(function (err, groups) {
     if (err) return res.send(500);
-    res.json(JSON.parse(body));
+    salesforce_client.postToCompany({
+      group:   groups[0],
+      message: req.body.message
+    }, function (err) {
+      if (err) return res.send(500);
+      res.redirect('/');
+    });
   });
 });
 

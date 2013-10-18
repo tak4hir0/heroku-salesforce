@@ -4,10 +4,22 @@
 </head>
 <body>
 	<% if (locals.user) { %>
+	<p>
 	Hello <%= locals.user.displayName %>
-	<% } %>
+	</p>
+
+		<% if (locals.user.identities[0].provider === 'salesforce') { %>
+		<p>Post a message to Chatter</p>
+		<form action="/chatter" method="post">
+			<textarea name="message"></textarea>
+			<input type="submit" value="send" />
+		</form>
+		<% } %>
+
+	<% } else { %>
 
 	<script id="auth0" src="https://sdk.auth0.com/auth0.js#client=<%= env["AUTH0_CLIENT_ID"] %>&redirect_uri=<%= env["AUTH0_CALLBACK_URL"] %>"></script>
 	<button onclick="window.Auth0.signIn({onestep: true})">Login</button>
+	<% } %>
 </body>
 </html>
